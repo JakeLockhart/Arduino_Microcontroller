@@ -6,6 +6,13 @@
 GigaDisplay_GFX gfx;
 Arduino_GigaDisplayTouch touch;
 
+// Convert 8-bit R,G,B into 16-bit 565 color
+uint16_t Color565(uint8_t r, uint8_t g, uint8_t b) {
+  return ((r & 0xF8) << 8) |   // top 5 bits of red
+         ((g & 0xFC) << 3) |   // top 6 bits of green
+         (b >> 3);             // top 5 bits of blue
+}
+
 // Button struct
 struct Button {
   int x, y, w, h;
@@ -13,20 +20,21 @@ struct Button {
   uint16_t color;  // background color when pressed
 };
 
-// Three buttons at bottom
-Button btn1 = {50, 300, 150, 80, "Button 1", 0xF800}; // Red
-Button btn2 = {220, 300, 150, 80, "Button 2", 0x07E0}; // Green
-Button btn3 = {390, 300, 150, 80, "Button 3", 0x001F}; // Blue
+// Three buttons at bottom (using RGB)
+Button btn1 = {50 , 300, 150, 80, "Button 1", Color565(255, 0, 0)};   // Red
+Button btn2 = {220, 300, 150, 80, "Button 2", Color565(0, 255, 0)};  // Green
+Button btn3 = {50 , 400, 150, 80, "Button 3", Color565(0, 0, 255)};  // Blue
+Button btn4 = {220, 400, 150, 80, "Button 4", Color565(0, 0, 0)};  // Blue
 
-Button* buttons[] = {&btn1, &btn2, &btn3};
+Button* buttons[] = {&btn1, &btn2, &btn3, &btn4};
 
 // Draw a button
 void drawButton(Button &btn) {
   gfx.fillRect(btn.x, btn.y, btn.w, btn.h, btn.color);
-  gfx.drawRect(btn.x, btn.y, btn.w, btn.h, 0xFFFF); // white border
+  gfx.drawRect(btn.x, btn.y, btn.w, btn.h, Color565(255, 255, 255)); // white border
   gfx.setCursor(btn.x + 10, btn.y + btn.h / 2 - 10);
   gfx.setTextSize(2);
-  gfx.setTextColor(0xFFFF); // white text
+  gfx.setTextColor(Color565(255, 255, 255)); // white text
   gfx.print(btn.label);
 }
 
@@ -34,7 +42,7 @@ void drawButton(Button &btn) {
 void drawTitleAndLetters() {
   gfx.setCursor(50, 20);
   gfx.setTextSize(5);
-  gfx.setTextColor(0xFFFF);
+  gfx.setTextColor(Color565(255, 255, 255)); // white
   gfx.print("DEMO");
 
   gfx.setCursor(50, 120);
@@ -54,7 +62,7 @@ bool isTouched(Button &btn, int tx, int ty) {
 
 void setup() {
   gfx.begin();
-  gfx.fillScreen(0x0000); // black
+  gfx.fillScreen(Color565(0, 0, 0)); // black background
 
   touch.begin();
 
@@ -78,7 +86,7 @@ void loop() {
         gfx.fillScreen(b->color);
         drawTitleAndLetters();
         for (Button* btn : buttons) drawButton(*btn);
-        delay(200); // simple debounce
+        delay(100); // simple debounce
         break;
       }
     }
